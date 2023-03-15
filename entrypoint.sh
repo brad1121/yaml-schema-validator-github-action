@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eux
+#set -eux
 
 # Returns a string `true` the string is considered boolean true,
 # otherwise `false`. An empty value is considered false.
@@ -29,7 +29,7 @@ then
 fi
 
 # TODO: Allow directories
-if [ ! -e "${target}" ]
+if [[ ! -e "${target}"  && ! -d "${target}" ]]
 then
   >&2 echo "Target does not exist: $target"
   exit 1
@@ -44,11 +44,44 @@ if [ "$error_is_success" = "true" ]
 then
   # Flipped validation logic
   echo "--- Flipped validation logic enabled (error-is-success: true)! ---"
+  if [ -d "${target}" ];
+  then
+    for f in $target/*
+    do
+       if [[ "$f" =~ \.(yaml|yml) && ! "$f" =~ schema\.yaml$ ]]
+      then
+        # shellcheck disable=SC2086
+        result=$(yamale $extra_args --schema="${schema}" "$f")
+        if ! [[ $result =~ success ]]; then
+          echo $result
+          exit 1
+        fi
+      fi
+      exit 1
+    done
+  else
   # shellcheck disable=SC2086
   yamale $extra_args --schema="${schema}" "$target" && exit 1
+  fi
   exit 0
 fi
 
 # Normal execution
-# shellcheck disable=SC2086
-yamale $extra_args --schema="${schema}" "$target"
+if [ -d "${target}" ];
+ then
+    for f in $target/*
+    do
+      if [[ "$f" =~ \.(yaml|yml) && ! "$f" =~ schema\.yaml$ ]]
+      then
+        # shellcheck disable=SC2086
+        result=$(yamale $extra_args --schema="${schema}" "$f")
+        if ! [[ $result =~ success ]]; then
+          echo $result
+          exit 1
+        fi
+      fi
+    done
+else
+ # shellcheck disable=SC2086
+  yamale $extra_args --schema="${schema}" "$target"
+fi

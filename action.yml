@@ -9,7 +9,7 @@ inputs:
     description: 'Yamale schema file'
     required: true
   target:
-    description: 'File to validate'
+    description: 'Files/Folder to validate'
     required: true
   no-strict:
     description: 'Disable strict mode'
